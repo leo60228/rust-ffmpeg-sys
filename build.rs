@@ -627,77 +627,115 @@ fn link_to_libraries(statik: bool) {
 }
 
 fn main() {
+    println!("{}:{}", file!(), line!());
+
     let statik = env::var("CARGO_FEATURE_STATIC").is_ok();
 
+    println!("{}:{}", file!(), line!());
     let include_paths: Vec<PathBuf> = if env::var("CARGO_FEATURE_BUILD").is_ok() {
+    println!("{}:{}", file!(), line!());
         println!(
             "cargo:rustc-link-search=native={}",
             search().join("lib").to_string_lossy()
         );
+    println!("{}:{}", file!(), line!());
         link_to_libraries(statik);
+    println!("{}:{}", file!(), line!());
         if fs::metadata(&search().join("lib").join("libavutil.a")).is_err() {
+    println!("{}:{}", file!(), line!());
             fs::create_dir_all(&output()).expect("failed to create build directory");
+    println!("{}:{}", file!(), line!());
             fetch().unwrap();
+    println!("{}:{}", file!(), line!());
             build().unwrap();
+    println!("{}:{}", file!(), line!());
         }
+    println!("{}:{}", file!(), line!());
 
         // Check additional required libraries.
         {
+    println!("{}:{}", file!(), line!());
             let config_mak = source().join("ffbuild/config.mak");
+    println!("{}:{}", file!(), line!());
             let file = File::open(config_mak).unwrap();
+    println!("{}:{}", file!(), line!());
             let reader = BufReader::new(file);
+    println!("{}:{}", file!(), line!());
             let extra_libs = reader
                 .lines()
                 .find(|ref line| line.as_ref().unwrap().starts_with("EXTRALIBS"))
                 .map(|line| line.unwrap())
                 .unwrap();
+    println!("{}:{}", file!(), line!());
 
             let linker_args = extra_libs.split('=').last().unwrap().split(' ');
+    println!("{}:{}", file!(), line!());
             let include_libs = linker_args
                 .filter(|v| v.starts_with("-l"))
                 .map(|flag| &flag[2..]);
+    println!("{}:{}", file!(), line!());
 
             for lib in include_libs {
                 println!("cargo:rustc-link-lib={}", lib);
+    println!("{}:{}", file!(), line!());
             }
+    println!("{}:{}", file!(), line!());
         }
 
+    println!("{}:{}", file!(), line!());
         vec![search().join("include")]
     }
     // Use prebuilt library
     else if let Ok(ffmpeg_dir) = env::var("FFMPEG_DIR") {
+    println!("{}:{}", file!(), line!());
         let ffmpeg_dir = PathBuf::from(ffmpeg_dir);
+    println!("{}:{}", file!(), line!());
         println!(
             "cargo:rustc-link-search=native={}",
             ffmpeg_dir.join("lib").to_string_lossy()
         );
+    println!("{}:{}", file!(), line!());
         link_to_libraries(statik);
+    println!("{}:{}", file!(), line!());
         vec![ffmpeg_dir.join("include")]
     } else if let Some(paths) = try_vcpkg(statik) {
+    println!("{}:{}", file!(), line!());
         // vcpkg doesn't detect the "system" dependencies
         if statik {
+    println!("{}:{}", file!(), line!());
             if cfg!(feature = "avcodec") || cfg!(feature = "avdevice") {
+    println!("{}:{}", file!(), line!());
                 println!("cargo:rustc-link-lib=ole32");
             }
+    println!("{}:{}", file!(), line!());
 
             if cfg!(feature = "avformat") {
+    println!("{}:{}", file!(), line!());
                 println!("cargo:rustc-link-lib=secur32");
+    println!("{}:{}", file!(), line!());
                 println!("cargo:rustc-link-lib=ws2_32");
             }
+    println!("{}:{}", file!(), line!());
 
             // avutil depdendencies
+    println!("{}:{}", file!(), line!());
             println!("cargo:rustc-link-lib=bcrypt");
+    println!("{}:{}", file!(), line!());
             println!("cargo:rustc-link-lib=user32");
+    println!("{}:{}", file!(), line!());
         }
 
+    println!("{}:{}", file!(), line!());
         paths
     }
     // Fallback to pkg-config
     else {
+    println!("{}:{}", file!(), line!());
         pkg_config::Config::new()
             .statik(statik)
             .probe("libavutil")
             .unwrap();
+    println!("{}:{}", file!(), line!());
 
         let libs = vec![
             ("libavformat", "AVFORMAT"),
@@ -707,16 +745,21 @@ fn main() {
             ("libswscale", "SWSCALE"),
             ("libswresample", "SWRESAMPLE"),
         ];
+    println!("{}:{}", file!(), line!());
 
         for (lib_name, env_variable_name) in libs.iter() {
+    println!("{}:{}", file!(), line!());
             if env::var(format!("CARGO_FEATURE_{}", env_variable_name)).is_ok() {
+    println!("{}:{}", file!(), line!());
                 pkg_config::Config::new()
                     .statik(statik)
                     .probe(lib_name)
                     .unwrap();
+    println!("{}:{}", file!(), line!());
             }
         }
 
+    println!("{}:{}", file!(), line!());
         pkg_config::Config::new()
             .statik(statik)
             .probe("libavcodec")
@@ -747,6 +790,7 @@ fn main() {
             println!("cargo:rustc-link-lib=framework={}", f);
         }
     }
+    println!("{}:{}", file!(), line!());
 
     check_features(
         include_paths.clone(),
@@ -1049,10 +1093,12 @@ fn main() {
             ("libswscale/swscale.h", Some("swscale"), "FF_API_ARCH_BFIN"),
         ],
     );
+    println!("{}:{}", file!(), line!());
 
     let clang_includes = include_paths
         .iter()
         .map(|include| format!("-I{}", include.to_string_lossy()));
+    println!("{}:{}", file!(), line!());
 
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
@@ -1152,10 +1198,12 @@ fn main() {
         .derive_eq(true)
         .size_t_is_usize(true)
         .parse_callbacks(Box::new(Callbacks));
+    println!("{}:{}", file!(), line!());
 
     // The input headers we would like to generate
     // bindings for.
     if env::var("CARGO_FEATURE_AVCODEC").is_ok() {
+    println!("{}:{}", file!(), line!());
         builder = builder
             .header(search_include(&include_paths, "libavcodec/avcodec.h"))
             .header(search_include(&include_paths, "libavcodec/dv_profile.h"))
@@ -1163,28 +1211,37 @@ fn main() {
             .header(search_include(&include_paths, "libavcodec/vaapi.h"))
             .header(search_include(&include_paths, "libavcodec/vorbis_parser.h"));
     }
+    println!("{}:{}", file!(), line!());
 
     if env::var("CARGO_FEATURE_AVDEVICE").is_ok() {
+    println!("{}:{}", file!(), line!());
         builder = builder.header(search_include(&include_paths, "libavdevice/avdevice.h"));
     }
 
+    println!("{}:{}", file!(), line!());
     if env::var("CARGO_FEATURE_AVFILTER").is_ok() {
+    println!("{}:{}", file!(), line!());
         builder = builder
             .header(search_include(&include_paths, "libavfilter/buffersink.h"))
             .header(search_include(&include_paths, "libavfilter/buffersrc.h"))
             .header(search_include(&include_paths, "libavfilter/avfilter.h"));
     }
 
+    println!("{}:{}", file!(), line!());
     if env::var("CARGO_FEATURE_AVFORMAT").is_ok() {
+    println!("{}:{}", file!(), line!());
         builder = builder
             .header(search_include(&include_paths, "libavformat/avformat.h"))
             .header(search_include(&include_paths, "libavformat/avio.h"));
     }
 
+    println!("{}:{}", file!(), line!());
     if env::var("CARGO_FEATURE_AVRESAMPLE").is_ok() {
+    println!("{}:{}", file!(), line!());
         builder = builder.header(search_include(&include_paths, "libavresample/avresample.h"));
     }
 
+    println!("{}:{}", file!(), line!());
     builder = builder
         .header(search_include(&include_paths, "libavutil/adler32.h"))
         .header(search_include(&include_paths, "libavutil/aes.h"))
@@ -1238,30 +1295,41 @@ fn main() {
         .header(search_include(&include_paths, "libavutil/twofish.h"))
         .header(search_include(&include_paths, "libavutil/avutil.h"))
         .header(search_include(&include_paths, "libavutil/xtea.h"));
+    println!("{}:{}", file!(), line!());
 
+    println!("{}:{}", file!(), line!());
     if env::var("CARGO_FEATURE_POSTPROC").is_ok() {
+    println!("{}:{}", file!(), line!());
         builder = builder.header(search_include(&include_paths, "libpostproc/postprocess.h"));
     }
 
+    println!("{}:{}", file!(), line!());
     if env::var("CARGO_FEATURE_SWRESAMPLE").is_ok() {
+    println!("{}:{}", file!(), line!());
         builder = builder.header(search_include(&include_paths, "libswresample/swresample.h"));
     }
 
+    println!("{}:{}", file!(), line!());
     if env::var("CARGO_FEATURE_SWSCALE").is_ok() {
+    println!("{}:{}", file!(), line!());
         builder = builder.header(search_include(&include_paths, "libswscale/swscale.h"));
     }
 
+    println!("{}:{}", file!(), line!());
     if let Some(hwcontext_drm_header) =
         maybe_search_include(&include_paths, "libavutil/hwcontext_drm.h")
     {
+    println!("{}:{}", file!(), line!());
         builder = builder.header(hwcontext_drm_header);
     }
 
+    println!("{}:{}", file!(), line!());
     // Finish the builder and generate the bindings.
     let bindings = builder
         .generate()
         // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings");
+    println!("{}:{}", file!(), line!());
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
     bindings
